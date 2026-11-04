@@ -206,12 +206,13 @@ setInterval(() => {
             const r = frame.data[indice];
             const g = frame.data[indice + 1];
             const b = frame.data[indice + 2];
+            
 
             //---------------------------------
             // 1. Calcula o brilho
             //---------------------------------
 
-            const brilho = (r + g + b) / 3;
+            const brilho = calcularBrilho(r, g, b);
 
             //---------------------------------
             // 2. Analisa a cor RGB
@@ -226,7 +227,7 @@ setInterval(() => {
             // 3. Critérios de detecção
             //---------------------------------
 
-            const intensidadeAlta = brilho >= 220;
+            const intensidadeAlta = pixelMuitoClaro(r, g, b);
 
             const corNeutra = diferencaRGB <= 35;
 
