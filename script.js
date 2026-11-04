@@ -148,6 +148,21 @@ function desenhar() {
 setInterval(desenhar, 30);
 
 // =====================================
+// FUNÇÕES DE ANÁLISE DA LUZ
+// =====================================
+
+// Calcula o brilho de um pixel RGB
+function calcularBrilho(r, g, b) {
+    return (r + g + b) / 3;
+}
+
+// Verifica se um pixel possui brilho elevado
+function pixelMuitoClaro(r, g, b) {
+    const brilho = calcularBrilho(r, g, b);
+    return brilho >= 220;
+}
+
+// =====================================
 // PROCESSAMENTO DA CÂMERA
 // =====================================
 
