@@ -1,3 +1,4 @@
+
 // =====================================
 // CONFIGURAÇÕES GERAIS
 // =====================================
@@ -6,7 +7,6 @@ const canvas = document.getElementById("overlay");
 const ctx = canvas.getContext("2d");
 
 const camera = document.getElementById("stream");
-
 const info = document.getElementById("info");
 
 // Canvas oculto para processamento da imagem
@@ -28,7 +28,6 @@ const CENTRO_Y = 120;
 
 const TOLERANCIA = 10;
 
-
 // =====================================
 // VARIÁVEIS
 // =====================================
@@ -43,17 +42,19 @@ let servoYStatus = "PARADO";
 
 let anguloX = 90;
 let anguloY = 90;
+
 let quantidadePixels = 0;
+
 let erroX = 0;
 let erroY = 0;
+
 // =====================================
 // DESENHAR INTERFACE
 // =====================================
 
-function desenhar()
-{
+function desenhar() {
 
-    ctx.clearRect(0,0,LARGURA,ALTURA);
+    ctx.clearRect(0, 0, LARGURA, ALTURA);
 
     //---------------------------------
     // Eixos
@@ -62,18 +63,14 @@ function desenhar()
     ctx.lineWidth = 2;
     ctx.strokeStyle = "lime";
 
-    // Vertical
-
     ctx.beginPath();
-    ctx.moveTo(CENTRO_X,0);
-    ctx.lineTo(CENTRO_X,ALTURA);
+    ctx.moveTo(CENTRO_X, 0);
+    ctx.lineTo(CENTRO_X, ALTURA);
     ctx.stroke();
 
-    // Horizontal
-
     ctx.beginPath();
-    ctx.moveTo(0,CENTRO_Y);
-    ctx.lineTo(LARGURA,CENTRO_Y);
+    ctx.moveTo(0, CENTRO_Y);
+    ctx.lineTo(LARGURA, CENTRO_Y);
     ctx.stroke();
 
     //---------------------------------
@@ -83,25 +80,26 @@ function desenhar()
     ctx.strokeRect(
         CENTRO_X - TOLERANCIA,
         CENTRO_Y - TOLERANCIA,
-        TOLERANCIA*2,
-        TOLERANCIA*2
+        TOLERANCIA * 2,
+        TOLERANCIA * 2
     );
 
     //---------------------------------
     // Centro
     //---------------------------------
 
-    ctx.fillStyle="yellow";
+    ctx.fillStyle = "yellow";
 
     ctx.beginPath();
-    ctx.arc(CENTRO_X,CENTRO_Y,4,0,Math.PI*2);
+    ctx.arc(CENTRO_X, CENTRO_Y, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.font="14px Arial";
+    ctx.font = "14px Arial";
+
     ctx.fillText(
         "Centro",
-        CENTRO_X+10,
-        CENTRO_Y-8
+        CENTRO_X + 10,
+        CENTRO_Y - 8
     );
 
     //---------------------------------
@@ -111,52 +109,51 @@ function desenhar()
     ctx.fillStyle = centralizado ? "lime" : "red";
 
     ctx.beginPath();
-    ctx.arc(
-        pontoX,
-        pontoY,
-        6,
-        0,
-        Math.PI*2
-    );
-
+    ctx.arc(pontoX, pontoY, 6, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillText(
         `(${pontoX},${pontoY})`,
-        pontoX+10,
+        pontoX + 10,
         pontoY
     );
 
+    //---------------------------------
+    // Informações
+    //---------------------------------
+
     info.innerHTML = `
-<b>Rastreador Solar</b><br><br>
+    <b>Rastreador Solar</b><br><br>
 
-X: ${pontoX}<br>
-Y: ${pontoY}<br>
+    X: ${pontoX}<br>
+    Y: ${pontoY}<br>
 
-Erro X: ${erroX}<br>
-Erro Y: ${erroY}<br><br>
+    Erro X: ${erroX}<br>
+    Erro Y: ${erroY}<br><br>
 
-Servo X: ${servoXStatus}<br>
-Servo Y: ${servoYStatus}<br><br>
+    Servo X: ${servoXStatus}<br>
+    Servo Y: ${servoYStatus}<br><br>
 
-Ângulo X: ${anguloX}°<br>
-Ângulo Y: ${anguloY}°<br><br>
+    Ângulo X: ${anguloX}°<br>
+    Ângulo Y: ${anguloY}°<br><br>
 
-Pixels Detectados: ${quantidadePixels}<br>
+    Pixels Detectados: ${quantidadePixels}<br>
 
-Status:
-${centralizado ? "🟢 CENTRALIZADO" : "🟡 AJUSTANDO"}
-`;
+    Status:
+    ${centralizado ? "🟢 CENTRALIZADO" : "🟡 AJUSTANDO"}
+    `;
 }
 
 // Atualiza o desenho
-setInterval(desenhar,30);
+setInterval(desenhar, 30);
 
-
+// =====================================
+// PROCESSAMENTO DA CÂMERA
+// =====================================
 
 setInterval(() => {
 
-    // Copia o frame da câmera para o canvas oculto
+    // Copia o frame da câmera
     hiddenCtx.drawImage(
         camera,
         0,
@@ -165,7 +162,7 @@ setInterval(() => {
         ALTURA
     );
 
-    // Lê todos os pixels
+    // Lê os pixels
     const frame = hiddenCtx.getImageData(
         0,
         0,
@@ -174,7 +171,7 @@ setInterval(() => {
     );
 
     //-------------------------------------
-    // Variáveis do centro da mancha
+    // Variáveis do centro luminoso
     //-------------------------------------
 
     let somaX = 0;
@@ -182,53 +179,68 @@ setInterval(() => {
     let quantidade = 0;
 
     //-------------------------------------
-    // Percorre toda a imagem
+    // Percorre a imagem
     //-------------------------------------
 
-    for(let y = 0; y < ALTURA; y += 2)
-    {
-        for(let x = 0; x < LARGURA; x += 2)
-        {
-            const indice =
-                (y * LARGURA + x) * 4;
+    for (let y = 0; y < ALTURA; y += 2) {
+
+        for (let x = 0; x < LARGURA; x += 2) {
+
+            const indice = (y * LARGURA + x) * 4;
 
             const r = frame.data[indice];
             const g = frame.data[indice + 1];
             const b = frame.data[indice + 2];
 
-            // brilho médio
+            //---------------------------------
+            // 1. Calcula o brilho
+            //---------------------------------
 
-            const brilho =
-                (r + g + b) / 3;
+            const brilho = (r + g + b) / 3;
 
-            // considera apenas pixels bem claros
+            //---------------------------------
+            // 2. Analisa a cor RGB
+            //---------------------------------
 
-            if(brilho > 220)
-            {
+            const maiorCanal = Math.max(r, g, b);
+            const menorCanal = Math.min(r, g, b);
+
+            const diferencaRGB = maiorCanal - menorCanal;
+
+            //---------------------------------
+            // 3. Critérios de detecção
+            //---------------------------------
+
+            const intensidadeAlta = brilho >= 220;
+
+            const corNeutra = diferencaRGB <= 35;
+
+            //---------------------------------
+            // 4. Detecta pixels luminosos
+            //---------------------------------
+
+            if (intensidadeAlta && corNeutra) {
+
                 somaX += x;
                 somaY += y;
+
                 quantidade++;
             }
-
         }
-        
     }
 
     //-------------------------------------
     // Calcula o centro da mancha luminosa
     //-------------------------------------
 
-    if(quantidade > 0)
-    {
-        const novoX =
-            Math.round(somaX / quantidade);
+    if (quantidade > 0) {
 
-        const novoY =
-            Math.round(somaY / quantidade);
+        const novoX = Math.round(somaX / quantidade);
+        const novoY = Math.round(somaY / quantidade);
 
-        
-
+        //---------------------------------
         // Suavização
+        //---------------------------------
 
         pontoX = Math.round(
             pontoX * 0.8 +
@@ -240,58 +252,71 @@ setInterval(() => {
             novoY * 0.2
         );
 
+        //---------------------------------
+        // Calcula os erros
+        //---------------------------------
+
         erroX = pontoX - CENTRO_X;
         erroY = pontoY - CENTRO_Y;
 
+        //---------------------------------
+        // Verifica centralização
+        //---------------------------------
+
         centralizado =
-        Math.abs(erroX) <= TOLERANCIA &&
-        Math.abs(erroY) <= TOLERANCIA;
+            Math.abs(erroX) <= TOLERANCIA &&
+            Math.abs(erroY) <= TOLERANCIA;
 
-        // -----------------------------
+        //---------------------------------
         // Direção do Servo X
-        // -----------------------------
+        //---------------------------------
 
-        if(erroX > TOLERANCIA)
-        {
+        if (erroX > TOLERANCIA) {
+
             servoXStatus = "DIREITA";
             anguloX++;
-        }
-        else if(erroX < -TOLERANCIA)
-        {
+
+        } else if (erroX < -TOLERANCIA) {
+
             servoXStatus = "ESQUERDA";
             anguloX--;
-        }
-        else
-        {
+
+        } else {
+
             servoXStatus = "PARADO";
         }
 
-        // -----------------------------
+        //---------------------------------
         // Direção do Servo Y
-        // -----------------------------
+        //---------------------------------
 
-        if(erroY > TOLERANCIA)
-        {
+        if (erroY > TOLERANCIA) {
+
             servoYStatus = "BAIXO";
             anguloY++;
-        }
-        else if(erroY < -TOLERANCIA)
-        {
+
+        } else if (erroY < -TOLERANCIA) {
+
             servoYStatus = "CIMA";
             anguloY--;
-        }
-        else
-        {
+
+        } else {
+
             servoYStatus = "PARADO";
         }
 
-        // Limita entre 0° e 180°
+        //---------------------------------
+        // Limita os ângulos
+        //---------------------------------
+
         anguloX = Math.max(0, Math.min(180, anguloX));
         anguloY = Math.max(0, Math.min(180, anguloY));
     }
-    
-quantidadePixels = quantidade;
 
-},50);
+    //-------------------------------------
+    // Atualiza quantidade de pixels
+    //-------------------------------------
 
+    quantidadePixels = quantidade;
 
+}, 50);
