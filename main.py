@@ -1,38 +1,53 @@
 
 from ultralytics import YOLO
+import cv2
 
 # Carrega o modelo
 modelo = YOLO("yolo26n.pt")
 
-# Analisa a imagem de teste
+# Analisa a imagem
 resultados = modelo("bus.jpg")
 
 # Percorre os resultados
 for resultado in resultados:
 
+    # Recupera a imagem original
+    imagem = resultado.orig_img.copy()
+
     for objeto in resultado.boxes:
 
-        # Identifica a classe
         classe = int(objeto.cls[0])
         confianca = float(objeto.conf[0])
         nome = modelo.names[classe]
 
-        # Obtém as coordenadas da caixa
-        x1, y1, x2, y2 = objeto.xyxy[0].tolist()
+        # Coordenadas na escala da imagem original
+        x1, y1, x2, y2 = map(
+            int, objeto.xyxy[0].tolist()
+        )
 
-        # Calcula o centro do objeto
-        centro_x = (x1 + x2) / 2
-        centro_y = (y1 + y2) / 2
+        # Desenha a caixa
+        cv2.rectangle(
+            imagem,
+            (x1, y1),
+            (x2, y2),
+            (0, 255, 0),
+            2
+        )
 
-        print(f"Objeto: {nome}")
-        print(f"Confiança: {confianca:.2%}")
+        # Nome e confiança
+        texto = f"{nome} {confianca:.0%}"
 
-        print(f"X inicial: {x1:.1f}")
-        print(f"Y inicial: {y1:.1f}")
-        print(f"X final: {x2:.1f}")
-        print(f"Y final: {y2:.1f}")
+        cv2.putText(
+            imagem,
+            texto,
+            (x1, max(20, y1 - 10)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (0, 255, 0),
+            2
+        )
 
-        print(f"Centro X: {centro_x:.1f}")
-        print(f"Centro Y: {centro_y:.1f}")
+    # Salva a imagem processada
+    cv2.imwrite("resultado.jpg", imagem)
 
-        print("-------------------------")
+print("Imagem processada e salva como resultado.jpg")
