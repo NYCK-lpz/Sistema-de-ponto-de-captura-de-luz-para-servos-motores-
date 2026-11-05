@@ -1,0 +1,5 @@
+o OpenCV é responsável por:
+-Capturar e processar imagens.
+-Analisar pixels.
+-Identificar regiões luminosas.
+-Trabalhar com imagens recebidas da câmera.
