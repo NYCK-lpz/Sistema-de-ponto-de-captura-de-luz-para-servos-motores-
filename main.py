@@ -164,14 +164,10 @@ for resultado in resultados:
             "proporcao": proporcao
         })
 
+    
     # =====================================
     # 9. CALCULAR PONTUACAO
     # =====================================
-
-    maior_area = max(
-        (regiao["area"] for regiao in regioes),
-        default=1
-    )
 
     for regiao in regioes:
 
@@ -180,8 +176,7 @@ for resultado in resultados:
             regiao["intensidade"] / 255
         )
 
-        # Formato: maior pontuacao para
-        # regioes mais compactas
+        # Formato: maior pontuacao para regioes compactas
         proporcao = max(
             regiao["proporcao"],
             0.001
@@ -191,19 +186,24 @@ for resultado in resultados:
             1 / (1 + abs(np.log(proporcao)))
         )
 
-        # Area: 0 a 1
-        pontuacao_area = (
-            regiao["area"] / maior_area
-        )
-
-        # Pontuacao final: 0 a 100
-        score = (
+        # Pontuacao base
+        pontuacao_base = (
             pontuacao_intensidade * 0.50 +
-            pontuacao_formato * 0.35 +
-            pontuacao_area * 0.15
+            pontuacao_formato * 0.35
         ) * 100
 
+        # Fator de tamanho:
+        # regioes pequenas recebem uma penalizacao
+        fator_tamanho = min(
+            regiao["area"] / 100,
+            1.0
+        )
+
+        # Pontuacao final
+        score = pontuacao_base * fator_tamanho
+
         regiao["score"] = score
+
 
     # =====================================
     # 10. ORDENAR PELAS MAIORES PONTUACOES
