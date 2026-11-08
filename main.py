@@ -47,7 +47,6 @@ for resultado in resultados:
 
         classe = int(objeto.cls[0])
         nome = modelo.names[classe]
-        confianca = float(objeto.conf[0])
 
         if nome == "person":
 
@@ -55,7 +54,6 @@ for resultado in resultados:
                 int, objeto.xyxy[0].tolist()
             )
 
-            # Limitar coordenadas
             x1 = max(0, min(x1, largura))
             x2 = max(0, min(x2, largura))
             y1 = max(0, min(y1, altura))
@@ -129,14 +127,43 @@ for resultado in resultados:
             momentos["m01"] / momentos["m00"]
         )
 
+        # =====================================
+        # CALCULAR INTENSIDADE MEDIA
+        # =====================================
+
+        mascara_regiao = np.zeros_like(cinza)
+
+        cv2.drawContours(
+            mascara_regiao,
+            [contorno],
+            -1,
+            255,
+            -1
+        )
+
+        intensidade = cv2.mean(
+            cinza,
+            mask=mascara_regiao
+        )[0]
+
+        # =====================================
+        # ANALISAR FORMATO DA REGIAO
+        # =====================================
+
+        x, y, w, h = cv2.boundingRect(contorno)
+
+        proporcao = w / h if h > 0 else 0
+
         regioes.append({
             "area": area,
             "x": centro_x,
-            "y": centro_y
+            "y": centro_y,
+            "intensidade": intensidade,
+            "proporcao": proporcao
         })
 
     # =====================================
-    # ORDENAR AS REGIOES
+    # ORDENAR AS REGIOES POR AREA
     # =====================================
 
     regioes.sort(
@@ -178,7 +205,10 @@ for resultado in resultados:
 
         print(
             f"Regiao {indice + 1}: "
-            f"X={x}, Y={y}, Area={area:.0f}"
+            f"X={x}, Y={y}, "
+            f"Area={area:.0f}, "
+            f"Intensidade={regiao['intensidade']:.1f}, "
+            f"Proporcao={regiao['proporcao']:.2f}"
         )
 
     # =====================================
