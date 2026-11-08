@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 # =====================================
-# CONFIGURACOES
+# 1. CONFIGURACOES
 # =====================================
 
 LIMIAR_BRILHO = 220
@@ -12,7 +12,7 @@ AREA_MINIMA = 10
 LIMITE_REGIOES = 10
 
 # =====================================
-# CARREGAR MODELO E IMAGEM
+# 2. CARREGAR MODELO E IMAGEM
 # =====================================
 
 modelo = YOLO("yolo26n.pt")
@@ -28,7 +28,7 @@ for resultado in resultados:
     print("Dimensoes da imagem:", largura, "x", altura)
 
     # =====================================
-    # CRIAR MASCARA
+    # 3. CRIAR MASCARA
     # =====================================
 
     mascara = np.full(
@@ -40,7 +40,7 @@ for resultado in resultados:
     pessoas = []
 
     # =====================================
-    # IDENTIFICAR PESSOAS COM YOLO
+    # 4. IDENTIFICAR PESSOAS COM YOLO
     # =====================================
 
     for objeto in resultado.boxes:
@@ -51,9 +51,11 @@ for resultado in resultados:
         if nome == "person":
 
             x1, y1, x2, y2 = map(
-                int, objeto.xyxy[0].tolist()
+                int,
+                objeto.xyxy[0].tolist()
             )
 
+            # Limitar coordenadas
             x1 = max(0, min(x1, largura))
             x2 = max(0, min(x2, largura))
             y1 = max(0, min(y1, altura))
@@ -73,7 +75,7 @@ for resultado in resultados:
             )
 
     # =====================================
-    # ANALISAR LUMINOSIDADE
+    # 5. ANALISAR LUMINOSIDADE
     # =====================================
 
     cinza = cv2.cvtColor(
@@ -88,7 +90,7 @@ for resultado in resultados:
         cv2.THRESH_BINARY
     )
 
-    # Ignorar pessoas
+    # Ignorar areas ocupadas por pessoas
     luminosidade_filtrada = cv2.bitwise_and(
         imagem_luminosa,
         imagem_luminosa,
@@ -96,7 +98,7 @@ for resultado in resultados:
     )
 
     # =====================================
-    # ENCONTRAR REGIOES LUMINOSAS
+    # 6. ENCONTRAR REGIOES LUMINOSAS
     # =====================================
 
     contornos, _ = cv2.findContours(
@@ -128,7 +130,7 @@ for resultado in resultados:
         )
 
         # =====================================
-        # CALCULAR INTENSIDADE MEDIA
+        # 7. CALCULAR INTENSIDADE MEDIA
         # =====================================
 
         mascara_regiao = np.zeros_like(cinza)
@@ -147,7 +149,7 @@ for resultado in resultados:
         )[0]
 
         # =====================================
-        # ANALISAR FORMATO DA REGIAO
+        # 8. ANALISAR FORMATO DA REGIAO
         # =====================================
 
         x, y, w, h = cv2.boundingRect(contorno)
@@ -163,21 +165,62 @@ for resultado in resultados:
         })
 
     # =====================================
-    # ORDENAR AS REGIOES POR AREA
+    # 9. CALCULAR PONTUACAO
+    # =====================================
+
+    maior_area = max(
+        (regiao["area"] for regiao in regioes),
+        default=1
+    )
+
+    for regiao in regioes:
+
+        # Intensidade: 0 a 1
+        pontuacao_intensidade = (
+            regiao["intensidade"] / 255
+        )
+
+        # Formato: maior pontuacao para
+        # regioes mais compactas
+        proporcao = max(
+            regiao["proporcao"],
+            0.001
+        )
+
+        pontuacao_formato = (
+            1 / (1 + abs(np.log(proporcao)))
+        )
+
+        # Area: 0 a 1
+        pontuacao_area = (
+            regiao["area"] / maior_area
+        )
+
+        # Pontuacao final: 0 a 100
+        score = (
+            pontuacao_intensidade * 0.50 +
+            pontuacao_formato * 0.35 +
+            pontuacao_area * 0.15
+        ) * 100
+
+        regiao["score"] = score
+
+    # =====================================
+    # 10. ORDENAR PELAS MAIORES PONTUACOES
     # =====================================
 
     regioes.sort(
-        key=lambda regiao: regiao["area"],
+        key=lambda regiao: regiao["score"],
         reverse=True
     )
 
     melhores_regioes = regioes[:LIMITE_REGIOES]
 
     # =====================================
-    # DESENHAR RESULTADOS
+    # 11. DESENHAR RESULTADOS
     # =====================================
 
-    print("\nREGIOES LUMINOSAS:")
+    print("\nREGIOES LUMINOSAS CLASSIFICADAS:")
 
     for indice, regiao in enumerate(melhores_regioes):
 
@@ -208,14 +251,18 @@ for resultado in resultados:
             f"X={x}, Y={y}, "
             f"Area={area:.0f}, "
             f"Intensidade={regiao['intensidade']:.1f}, "
-            f"Proporcao={regiao['proporcao']:.2f}"
+            f"Proporcao={regiao['proporcao']:.2f}, "
+            f"Score={regiao['score']:.2f}"
         )
 
     # =====================================
-    # SALVAR IMAGENS
+    # 12. SALVAR IMAGENS
     # =====================================
 
-    cv2.imwrite("mascara_pessoas.jpg", mascara)
+    cv2.imwrite(
+        "mascara_pessoas.jpg",
+        mascara
+    )
 
     cv2.imwrite(
         "luminosidade_filtrada.jpg",
@@ -228,11 +275,22 @@ for resultado in resultados:
     )
 
     # =====================================
-    # RESUMO
+    # 13. RESUMO
     # =====================================
 
     print("\n========== RESULTADO ==========")
+
     print("Pessoas identificadas:", len(pessoas))
     print("Regioes encontradas:", len(regioes))
-    print("Regioes exibidas:", len(melhores_regioes))
-    print("Imagens salvas com sucesso!")
+    print("Regioes classificadas:", len(melhores_regioes))
+
+    if melhores_regioes:
+
+        melhor = melhores_regioes[0]
+
+        print("\nREGIAO MAIS BEM CLASSIFICADA:")
+        print("Centro X:", melhor["x"])
+        print("Centro Y:", melhor["y"])
+        print("Pontuacao:", round(melhor["score"], 2))
+
+    print("\nImagens salvas com sucesso!")
