@@ -11,6 +11,9 @@ resultados = modelo("bus.jpg")
 for resultado in resultados:
 
     imagem = resultado.orig_img.copy()
+    # Cria uma máscara branca do tamanho da imagem
+    mascara = 255 * (imagem[:, :, 0] * 0 + 1)
+
     print("Dimensões originais:", resultado.orig_shape)
     print("Formato da imagem:", imagem.shape)
 
@@ -18,6 +21,16 @@ for resultado in resultados:
     pessoas = []
 
     for objeto in resultado.boxes:
+
+        # Aplica a máscara na imagem original
+        imagem_filtrada = cv2.bitwise_and(
+            imagem,
+            imagem,
+            mask=mascara.astype("uint8")
+        )
+
+        cv2.imwrite("mascara_pessoas.jpg", mascara)
+        cv2.imwrite("imagem_filtrada.jpg", imagem_filtrada)
 
         classe = int(objeto.cls[0])
         confianca = float(objeto.conf[0])
@@ -32,6 +45,8 @@ for resultado in resultados:
         if nome == "person":
 
             pessoas.append((x1, y1, x2, y2))
+            # Marca a região da pessoa como preta na máscara
+            mascara[y1:y2, x1:x2] = 0
 
             cv2.rectangle(
                 imagem,
