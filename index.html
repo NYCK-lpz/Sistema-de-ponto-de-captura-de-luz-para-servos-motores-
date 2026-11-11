@@ -1,54 +1,68 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL Project | Monitoramento Inteligente</title>
 
-<title>Rastreador Solar - ESP32 CAM</title>
-<link rel="stylesheet" href="style.css">
-
-<style>
-
-
-</style>
-
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div id="container">
+    <main id="container">
 
-    <div id="cameraBox">
+        <!-- ÁREA DA CÂMERA -->
+        <section id="cameraBox">
 
-        <img id="stream" src="http://192.168.0.48:81/stream" crossorigin="">
-        <canvas
-            id="overlay"
-            width="320"
-            height="240">
-        </canvas>
+            <img
+                id="stream"
+                src="/video_feed"
+                alt="Câmera SPL Project"
+            >
 
-    </div>
+            <canvas
+                id="overlay"
+                width="320"
+                height="240">
+            </canvas>
 
-    <div id="painel">
+        </section>
 
-        <h2>Monitor</h2>
+        <!-- PAINEL DE MONITORAMENTO -->
+        <section id="painel">
 
-        <div id="info">
+            <h2>SPL Project</h2>
 
-            Aguardando câmera...
+            <p id="conexao">Conectando ao sistema...</p>
 
-        </div>
+            <div id="info">
 
-    </div>
+                <p>Status: <span id="status">Aguardando</span></p>
 
-</div>
+                <p>Posição X: <span id="posX">0</span></p>
 
-<script src="script.js">
+                <p>Posição Y: <span id="posY">0</span></p>
 
+                <p>Erro X: <span id="erroX">0</span></p>
 
-</script>
+                <p>Ângulo do servo: <span id="angulo">90°</span></p>
+
+                <p>LED ativo: <span id="led">Nenhum</span></p>
+
+                <p>Detecção: <span id="deteccao">Aguardando</span></p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
 
 </body>
+
 </html>
