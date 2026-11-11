@@ -1,23 +1,29 @@
+
 import cv2
+import time
 
 URL_CAMERA = "http://192.168.0.49:81/stream"
 
-camera = cv2.VideoCapture(URL_CAMERA)
+print("Conectando à câmera...")
+
+camera = cv2.VideoCapture(URL_CAMERA, cv2.CAP_FFMPEG)
 
 if not camera.isOpened():
-    print("Erro ao conectar com a câmera!")
+    print("ERRO: Não foi possível abrir a câmera.")
     exit()
 
-print("Câmera conectada com sucesso!")
+print("Câmera conectada!")
 
 while True:
+
     sucesso, frame = camera.read()
 
-    if not sucesso:
-        print("Erro ao receber imagem.")
-        break
+    if not sucesso or frame is None:
+        print("Falha ao receber quadro. Tentando novamente...")
+        time.sleep(0.2)
+        continue
 
-    cv2.imshow("Camera ESP32 - Teste", frame)
+    cv2.imshow("SPL PROJECT - CAMERA", frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
