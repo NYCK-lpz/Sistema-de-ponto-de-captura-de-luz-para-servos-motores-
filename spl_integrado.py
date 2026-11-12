@@ -13,7 +13,7 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-URL_CAMERA = "http://10.0.1.11:81/stream"
+URL_CAMERA = "http://10.0.1.11  :81/stream"
 
 PORTA_ARDUINO = "COM5"
 BAUD_RATE = 9600
