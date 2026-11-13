@@ -23,6 +23,9 @@ if not camera.isOpened():
 
 print("Pressione Q na janela para encerrar.")
 
+cv2.namedWindow("Teste YOLO + camera", cv2.WINDOW_NORMAL)
+cv2.resizeWindow("Teste YOLO + camera", 800, 600)
+
 tempos_ms = []
 
 try:
