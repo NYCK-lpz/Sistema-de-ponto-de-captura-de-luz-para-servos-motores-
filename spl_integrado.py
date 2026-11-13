@@ -27,7 +27,9 @@ modelo = YOLO(CAMINHO_MODELO)
 
 print("YOLO carregado com sucesso!")
 
-URL_CAMERA = "http://10.0.1.11:81/stream"
+URL_CAMERA = "http://10.0.1.11:81/stream"   # XIAO (fora de uso por enquanto)
+
+INDICE_CAMERA = 1   # NOVO - webcam USB
 
 PORTA_ARDUINO = "COM5"
 BAUD_RATE = 9600
@@ -289,12 +291,13 @@ print("Acesse: http://127.0.0.1:5000")
 
 
 # =========================================
-# 12. CONECTAR A CAMERA ESP32
+# 12. CONECTAR A CAMERA (WEBCAM USB)
 # =========================================
 
 print("Conectando a camera...")
 
-camera = cv2.VideoCapture(URL_CAMERA, cv2.CAP_FFMPEG)
+# NOVO - webcam USB pelo indice (antes: VideoCapture(URL_CAMERA, cv2.CAP_FFMPEG))
+camera = cv2.VideoCapture(INDICE_CAMERA, cv2.CAP_DSHOW)
 
 if not camera.isOpened():
 
