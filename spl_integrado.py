@@ -40,6 +40,13 @@ ANGULO_ATUAL = 90
 VELOCIDADE_SERVO = 3
 ANGULO_INVERTIDO = False
 
+# NOVO - YOLO: exclusao de regioes ocupadas
+CONFIANCA_YOLO = 0.4        # ignora deteccoes abaixo de 40%
+TAMANHO_YOLO = 320          # resolucao usada na inferencia
+INTERVALO_YOLO = 1          # roda o YOLO a cada N frames (1 = todo frame)
+MARGEM_EXCLUSAO = 6         # pixels extras ao redor de cada caixa
+CLASSES_EXCLUIDAS = ["person"]   # None = excluir todas as classes
+
 # =========================================
 # 2. CONFIGURACAO DO FLASK
 # =========================================
@@ -319,6 +326,11 @@ print("Procurando fonte de luz...")
 # 14. PROCESSAMENTO DA IMAGEM
 # =========================================
 
+# NOVO - variaveis do YOLO
+contador_frames = 0
+deteccoes = []          # ultimas deteccoes do YOLO
+tempo_yolo_ms = 0.0     # duracao da ultima inferencia
+
 try:
 
     while True:
@@ -355,6 +367,54 @@ try:
             255,
             cv2.THRESH_BINARY
         )
+
+        # NOVO - YOLO: identificar pessoas e objetos
+        if contador_frames % INTERVALO_YOLO == 0:
+
+            inicio_yolo = time.perf_counter()
+
+            resultados = modelo(
+                frame,
+                imgsz=TAMANHO_YOLO,
+                conf=CONFIANCA_YOLO,
+                verbose=False
+            )
+
+            tempo_yolo_ms = (time.perf_counter() - inicio_yolo) * 1000
+
+            deteccoes = []
+
+            for caixa in resultados[0].boxes:
+
+                nome = modelo.names[int(caixa.cls[0])]
+
+                x1, y1, x2, y2 = map(int, caixa.xyxy[0].tolist())
+
+                confianca = float(caixa.conf[0])
+
+                excluida = (
+                    CLASSES_EXCLUIDAS is None
+                    or nome in CLASSES_EXCLUIDAS
+                )
+
+                deteccoes.append(
+                    (x1, y1, x2, y2, nome, confianca, excluida)
+                )
+
+        contador_frames += 1
+
+        # NOVO - Mascara de exclusao: pinta de preto as regioes ocupadas
+        for (x1, y1, x2, y2, nome, confianca, excluida) in deteccoes:
+
+            if excluida:
+
+                cv2.rectangle(
+                    mascara,
+                    (x1 - MARGEM_EXCLUSAO, y1 - MARGEM_EXCLUSAO),
+                    (x2 + MARGEM_EXCLUSAO, y2 + MARGEM_EXCLUSAO),
+                    0,
+                    -1
+                )
 
         # Encontrar regioes luminosas
         contornos, _ = cv2.findContours(
@@ -530,6 +590,33 @@ try:
             frame,
             f"Servo: {ANGULO_ATUAL}",
             (5, 40),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (255, 255, 255),
+            1
+        )
+
+        # NOVO - Caixas do YOLO (laranja = excluida da busca de luz, cinza = apenas informativa)
+        for (x1, y1, x2, y2, nome, confianca, excluida) in deteccoes:
+
+            cor = (255, 128, 0) if excluida else (150, 150, 150)
+
+            cv2.rectangle(frame, (x1, y1), (x2, y2), cor, 1)
+
+            cv2.putText(
+                frame,
+                f"{nome} {confianca:.2f}",
+                (x1, max(y1 - 5, 12)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                cor,
+                1
+            )
+
+        cv2.putText(
+            frame,
+            f"YOLO: {tempo_yolo_ms:.0f} ms",
+            (5, 60),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
             (255, 255, 255),
