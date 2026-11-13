@@ -1,11 +1,13 @@
-
 import cv2
 import serial
 import time
 import threading
+from ultralytics import YOLO
 
 from flask import Flask, Response, jsonify, send_from_directory
 import os
+
+
 
 # =========================================
 # 1. CONFIGURACOES DO PROJETO
@@ -13,7 +15,19 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-URL_CAMERA = "http://10.0.1.11  :81/stream"
+# =========================================
+# YOLO - DETECCAO DE OBJETOS
+# =========================================
+
+CAMINHO_MODELO = os.path.join(BASE_DIR, "yolo26n.pt")
+
+print("Carregando modelo YOLO...")
+
+modelo = YOLO(CAMINHO_MODELO)
+
+print("YOLO carregado com sucesso!")
+
+URL_CAMERA = "http://10.0.1.11:81/stream"
 
 PORTA_ARDUINO = "COM5"
 BAUD_RATE = 9600
