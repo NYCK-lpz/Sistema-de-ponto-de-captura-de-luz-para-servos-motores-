@@ -1,6 +1,6 @@
 import cv2
 
-#camera0 = cv2.VideoCapture(0, cv2.CAP_DSHOW) ------- Essa é a camera do notebook ou pc então esta offline
+camera0 = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 camera1 = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 print("Pressione Q para encerrar.")
